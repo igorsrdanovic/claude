@@ -1,4 +1,6 @@
 {
-  "vaultPath": "./vault",
-  "port": 3000
+  "vaultsPath": "./vaults",
+  "port": 3000,
+  "sessionSecret": "change-me-in-production",
+  "tokenExpiryMinutes": 15
 }

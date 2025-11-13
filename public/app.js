@@ -3,6 +3,7 @@ let allNotes = [];
 let currentNote = null;
 let saveTimeout = null;
 let currentBacklinks = [];
+let currentUser = null;
 
 // DOM elements
 const fileTree = document.getElementById('file-tree');
@@ -20,9 +21,47 @@ const newNoteForm = document.getElementById('new-note-form');
 const newNoteName = document.getElementById('new-note-name');
 const newNoteFolder = document.getElementById('new-note-folder');
 const cancelBtn = document.getElementById('cancel-btn');
+const userEmail = document.getElementById('user-email');
+const logoutBtn = document.getElementById('logout-btn');
+
+// Check authentication
+async function checkAuth() {
+  try {
+    const response = await fetch('/auth/me');
+    if (response.ok) {
+      currentUser = await response.json();
+      userEmail.textContent = currentUser.email;
+      return true;
+    } else {
+      window.location.href = '/login.html';
+      return false;
+    }
+  } catch (error) {
+    console.error('Auth check failed:', error);
+    window.location.href = '/login.html';
+    return false;
+  }
+}
+
+// Handle logout
+async function handleLogout() {
+  try {
+    const response = await fetch('/auth/logout', { method: 'POST' });
+    if (response.ok) {
+      window.location.href = '/login.html';
+    }
+  } catch (error) {
+    console.error('Logout failed:', error);
+    alert('Logout failed. Please try again.');
+  }
+}
 
 // Initialize app
 async function init() {
+  // Check authentication first
+  const isAuthenticated = await checkAuth();
+  if (!isAuthenticated) return;
+
   await loadNotes();
   setupEventListeners();
 
@@ -36,6 +75,10 @@ async function init() {
 async function loadNotes() {
   try {
     const response = await fetch('/api/notes');
+    if (response.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
     allNotes = await response.json();
     renderFileTree(allNotes);
   } catch (error) {
@@ -393,6 +436,9 @@ function setupEventListeners() {
 
   // Delete note button
   deleteNoteBtn.addEventListener('click', deleteNote);
+
+  // Logout button
+  logoutBtn.addEventListener('click', handleLogout);
 
   // Modal
   cancelBtn.addEventListener('click', closeModal);
