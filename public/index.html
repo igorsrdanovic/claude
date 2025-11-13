@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Markdown Notes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Notes</h2>
+        <button id="new-note-btn" class="btn-primary" title="Create new note">+ New</button>
+      </div>
+
+      <!-- Search box -->
+      <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search notes...">
+      </div>
+
+      <!-- File tree -->
+      <div class="file-tree" id="file-tree">
+        <!-- Populated by JavaScript -->
+      </div>
+
+      <!-- Backlinks panel -->
+      <div class="backlinks-panel">
+        <div class="backlinks-header">
+          <h3>Backlinks</h3>
+          <span id="backlinks-count" class="count">0</span>
+        </div>
+        <div id="backlinks-list" class="backlinks-list">
+          <p class="empty-state">No backlinks</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main-content">
+      <!-- Editor section -->
+      <div class="editor-section">
+        <div class="editor-header">
+          <input type="text" id="note-title" class="note-title" placeholder="Note title" readonly>
+          <div class="editor-actions">
+            <span id="save-status" class="save-status">Saved</span>
+            <button id="delete-note-btn" class="btn-danger" title="Delete note">Delete</button>
+          </div>
+        </div>
+        <textarea id="editor" class="editor" placeholder="Start writing..."></textarea>
+      </div>
+
+      <!-- Preview section -->
+      <div class="preview-section">
+        <div class="preview-header">
+          <h3>Preview</h3>
+        </div>
+        <div id="preview" class="preview"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- New note modal -->
+  <div id="new-note-modal" class="modal">
+    <div class="modal-content">
+      <h3>Create New Note</h3>
+      <form id="new-note-form">
+        <label for="new-note-name">Note name:</label>
+        <input type="text" id="new-note-name" placeholder="my-note" required>
+        <label for="new-note-folder">Folder (optional):</label>
+        <input type="text" id="new-note-folder" placeholder="folder/subfolder">
+        <div class="modal-actions">
+          <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Create</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
