@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Markdown Notes</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 </head>
 <body>
   <div class="app">
@@ -21,14 +22,43 @@
         <button id="logout-btn" class="btn-secondary btn-small" title="Logout">Logout</button>
       </div>
 
+      <!-- Theme controls -->
+      <div class="theme-controls">
+        <button id="theme-toggle" class="theme-toggle" title="Toggle dark mode">🌙 Dark Mode</button>
+        <button id="daily-note-btn" class="theme-toggle" title="Open today's note">📅 Daily</button>
+      </div>
+
       <!-- Search box -->
       <div class="search-box">
         <input type="text" id="search-input" placeholder="Search notes...">
       </div>
 
-      <!-- File tree -->
-      <div class="file-tree" id="file-tree">
-        <!-- Populated by JavaScript -->
+      <!-- Sidebar tabs -->
+      <div class="sidebar-tabs">
+        <div class="sidebar-tab active" data-tab="files">📁 Files</div>
+        <div class="sidebar-tab" data-tab="tags">🏷️ Tags</div>
+        <div class="sidebar-tab" data-tab="recent">🕒 Recent</div>
+      </div>
+
+      <!-- Files panel -->
+      <div id="files-panel" class="sidebar-panel active">
+        <div class="file-tree" id="file-tree">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Tags panel -->
+      <div id="tags-panel" class="sidebar-panel">
+        <div class="tags-list" id="tags-list">
+          <p class="empty-state">No tags found</p>
+        </div>
+      </div>
+
+      <!-- Recent panel -->
+      <div id="recent-panel" class="sidebar-panel">
+        <div class="recent-notes-list" id="recent-notes-list">
+          <p class="empty-state">No recent notes</p>
+        </div>
       </div>
 
       <!-- Backlinks panel -->
@@ -50,10 +80,38 @@
         <div class="editor-header">
           <input type="text" id="note-title" class="note-title" placeholder="Note title" readonly>
           <div class="editor-actions">
+            <div class="editor-stats">
+              <span class="stat-item">
+                <span id="word-count">0</span> words
+              </span>
+              <span class="stat-item">
+                <span id="char-count">0</span> chars
+              </span>
+            </div>
             <span id="save-status" class="save-status">Saved</span>
-            <button id="delete-note-btn" class="btn-danger" title="Delete note">Delete</button>
+            <button id="delete-note-btn" class="btn-danger btn-small" title="Delete note">Delete</button>
           </div>
         </div>
+
+        <!-- Editor toolbar -->
+        <div class="editor-toolbar">
+          <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)"><strong>B</strong></button>
+          <button class="toolbar-btn" data-action="italic" title="Italic (Ctrl+I)"><em>I</em></button>
+          <button class="toolbar-btn" data-action="code" title="Inline code">Code</button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn" data-action="h1" title="Heading 1"># H1</button>
+          <button class="toolbar-btn" data-action="h2" title="Heading 2">## H2</button>
+          <button class="toolbar-btn" data-action="h3" title="Heading 3">### H3</button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn" data-action="ul" title="Bullet list">• List</button>
+          <button class="toolbar-btn" data-action="ol" title="Numbered list">1. List</button>
+          <button class="toolbar-btn" data-action="task" title="Task list">☐ Task</button>
+          <div class="toolbar-divider"></div>
+          <button class="toolbar-btn" data-action="link" title="Insert link">🔗 Link</button>
+          <button class="toolbar-btn" data-action="backlink" title="Insert backlink">[[Link]]</button>
+          <button class="toolbar-btn" data-action="codeblock" title="Code block">{ } Code</button>
+        </div>
+
         <textarea id="editor" class="editor" placeholder="Start writing..."></textarea>
       </div>
 
@@ -61,6 +119,10 @@
       <div class="preview-section">
         <div class="preview-header">
           <h3>Preview</h3>
+          <div class="preview-actions">
+            <button id="export-btn" class="btn-secondary btn-small">📥 Export</button>
+            <button id="graph-btn" class="btn-secondary btn-small">🕸️ Graph</button>
+          </div>
         </div>
         <div id="preview" class="preview"></div>
       </div>
@@ -74,8 +136,19 @@
       <form id="new-note-form">
         <label for="new-note-name">Note name:</label>
         <input type="text" id="new-note-name" placeholder="my-note" required>
+
         <label for="new-note-folder">Folder (optional):</label>
         <input type="text" id="new-note-folder" placeholder="folder/subfolder">
+
+        <label for="new-note-template">Template (optional):</label>
+        <select id="new-note-template">
+          <option value="">None</option>
+          <option value="blank">Blank</option>
+          <option value="daily">Daily Note</option>
+          <option value="meeting">Meeting Notes</option>
+          <option value="project">Project Template</option>
+        </select>
+
         <div class="modal-actions">
           <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
           <button type="submit" class="btn-primary">Create</button>
@@ -84,6 +157,85 @@
     </div>
   </div>
 
+  <!-- Export modal -->
+  <div id="export-modal" class="modal">
+    <div class="modal-content">
+      <h3>Export Note</h3>
+      <div class="export-options">
+        <div class="export-option" data-format="markdown">
+          <div class="export-option-icon">📝</div>
+          <div class="export-option-text">
+            <h4>Markdown</h4>
+            <p>Export as .md file</p>
+          </div>
+        </div>
+        <div class="export-option" data-format="html">
+          <div class="export-option-icon">🌐</div>
+          <div class="export-option-text">
+            <h4>HTML</h4>
+            <p>Export as standalone HTML file</p>
+          </div>
+        </div>
+        <div class="export-option" data-format="pdf">
+          <div class="export-option-icon">📄</div>
+          <div class="export-option-text">
+            <h4>PDF</h4>
+            <p>Export as PDF document</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="export-cancel-btn" class="btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Graph view modal -->
+  <div id="graph-modal" class="modal">
+    <div class="modal-content" style="width: 90%; height: 90vh; max-width: none;">
+      <h3>Note Graph</h3>
+      <div class="graph-view" style="height: calc(100% - 80px); position: relative;">
+        <canvas id="graph-canvas"></canvas>
+        <div class="graph-controls">
+          <button class="btn-secondary btn-small" id="graph-reset">Reset Zoom</button>
+          <button class="btn-secondary btn-small" id="graph-close">Close</button>
+        </div>
+        <div class="graph-legend">
+          <div class="legend-item">
+            <div class="legend-color" style="background: #4a90e2;"></div>
+            <span>Current note</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #7c3aed;"></div>
+            <span>Linked notes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #999;"></div>
+            <span>Other notes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick switcher -->
+  <div id="quick-switcher" class="quick-switcher">
+    <div class="quick-switcher-content">
+      <input
+        type="text"
+        id="quick-switcher-input"
+        class="quick-switcher-input"
+        placeholder="Search notes or commands..."
+      >
+      <div id="quick-switcher-results" class="quick-switcher-results">
+        <!-- Populated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
