@@ -1,0 +1,65 @@
+# Node modules (will be installed in container)
+node_modules/
+npm-debug.log
+
+# Git
+.git/
+.gitignore
+
+# Environment files (use docker-compose env vars instead)
+.env
+.env.local
+.env.*.local
+
+# Database (use volumes instead)
+notes.db
+notes.db-journal
+
+# Vaults (use volumes instead)
+vaults/
+
+# Documentation
+*.md
+!README.md
+FEATURES.md
+QUICK_START.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Docker files (no need to copy into image)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Backup files
+*.backup
+*.bak
+
+# Test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
