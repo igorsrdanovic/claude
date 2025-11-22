@@ -91,6 +91,210 @@ docker-compose build
 docker-compose -f docker-compose.prod.yml build
 ```
 
+## 📦 Publishing to Docker Hub
+
+### Prerequisites
+
+1. Create a Docker Hub account at https://hub.docker.com
+2. Login to Docker Hub from command line:
+
+```bash
+docker login
+# Enter your Docker Hub username and password
+```
+
+### Method 1: Push Existing Image
+
+```bash
+# Tag your image with your Docker Hub username
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0
+
+# Push to Docker Hub
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0
+```
+
+### Method 2: Build and Push in One Step
+
+```bash
+# Build for your Docker Hub repository
+docker build -t YOUR_DOCKERHUB_USERNAME/markdown-notes:latest .
+docker build -t YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0 .
+
+# Push to Docker Hub
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0
+```
+
+### Method 3: Automated Build with GitHub Actions
+
+Create `.github/workflows/docker-publish.yml`:
+
+```yaml
+name: Docker Publish
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: YOUR_DOCKERHUB_USERNAME/markdown-notes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log into Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+```
+
+**Setup GitHub Secrets:**
+1. Go to your GitHub repository → Settings → Secrets and variables → Actions
+2. Add secrets:
+   - `DOCKERHUB_USERNAME`: Your Docker Hub username
+   - `DOCKERHUB_TOKEN`: Docker Hub access token (create at https://hub.docker.com/settings/security)
+
+### Pull and Use Your Published Image
+
+Once published, anyone can use your image:
+
+```bash
+# Pull from Docker Hub
+docker pull YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+
+# Run the container
+docker run -d \
+  --name markdown-notes \
+  -p 3000:3000 \
+  -e SESSION_SECRET="your-secret-here" \
+  -v vaults-data:/app/vaults \
+  -v db-data:/app \
+  YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+
+# Or use with docker-compose
+# Update image in docker-compose.yml:
+# image: YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+```
+
+### Multi-Platform Builds (AMD64 + ARM64)
+
+Build for multiple architectures (useful for Apple Silicon, Raspberry Pi, etc.):
+
+```bash
+# Create a new builder
+docker buildx create --name multiplatform --use
+
+# Build and push for multiple platforms
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t YOUR_DOCKERHUB_USERNAME/markdown-notes:latest \
+  -t YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0 \
+  --push \
+  .
+```
+
+### Make Repository Public or Private
+
+**Public Repository (Free)**:
+- Go to Docker Hub → Your repository → Settings
+- Anyone can pull your image
+- Good for open-source projects
+
+**Private Repository (Free for 1 repo)**:
+- Go to Docker Hub → Your repository → Settings → Make Private
+- Only you can pull (or team members if using Docker Hub Teams)
+- Good for proprietary applications
+
+### Best Practices for Docker Hub
+
+```bash
+# Always tag with version numbers
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:1
+docker tag markdown-notes:latest YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+
+# Push all tags
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0.0
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:1.0
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:1
+docker push YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+```
+
+### Add README to Docker Hub
+
+Create a `README.docker.md` file and paste it into your Docker Hub repository's "Overview" section:
+
+```markdown
+# Markdown Notes - Obsidian Lite
+
+A lightweight, self-hosted markdown note-taking application with backlinks, tags, and more.
+
+## Quick Start
+
+\`\`\`bash
+docker run -d \\
+  --name markdown-notes \\
+  -p 3000:3000 \\
+  -e SESSION_SECRET="$(openssl rand -hex 32)" \\
+  -v markdown-vaults:/app/vaults \\
+  -v markdown-db:/app \\
+  YOUR_DOCKERHUB_USERNAME/markdown-notes:latest
+\`\`\`
+
+Access at http://localhost:3000
+
+## Features
+
+- 📝 Markdown editing with live preview
+- 🔗 Wiki-style backlinks `[[note]]`
+- 🏷️ Tags with `#tag`
+- 🌙 Dark mode
+- 🔍 Full-text search
+- 📊 Graph view
+- 👥 Multi-user with Google OAuth
+- 🔒 Secure authentication
+- 📥 Export to PDF/HTML/Markdown
+
+## Documentation
+
+See the full documentation at: [GitHub Repository URL]
+\`\`\`
+
 ## 🚀 Running
 
 ### Method 1: Docker Compose (Recommended)
